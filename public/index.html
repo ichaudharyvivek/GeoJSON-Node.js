@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- BootStrap CDN -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
+        integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+    <!-- BootStrap JS -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"
+        integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+        integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+        crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"
+        integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI"
+        crossorigin="anonymous"></script>
+    <!-- Font Awesome -->
+    <script src="https://kit.fontawesome.com/169b188851.js" crossorigin="anonymous"></script>
+    <!-- Mapbox -->
+    <script src='https://api.mapbox.com/mapbox-gl-js/v1.11.1/mapbox-gl.js'></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v1.11.1/mapbox-gl.css' rel='stylesheet' />
+    <title>Store Locator</title>
+</head>
+
+<body>
+    <div class="container my-3">
+        <h1 class="displat-4 text-center"><i class="fas fa-map-marked mr-4"></i>&nbsp;Store Locator</h1>
+    </div>
+
+    <div class="container">
+        <a href="add.html" class="btn btn-success mb-4"><i class="fas fa-store"></i>&nbsp;Add Store</a>
+        <div id='map' style='width: 100%; height: 500px; border-radius: 5px;'></div>
+    </div>
+
+    <script>
+        mapboxgl.accessToken = 'pk.eyJ1IjoiY2hhdWRoYXJ5dml2ZWsiLCJhIjoiY2tkMW1rMnM1MTR2ZjJzbXZ3bDZnZmxyZiJ9.YUMUd7JRfLd8JGhQ6pWgwg';
+        var map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/streets-v11',
+            zoom: 9,
+            center: [-71.157895, 42.707741]
+        });
+
+        // Fetch stores from API
+        async function getStores() {
+            const res = await fetch('/api/v1/stores');
+            const data = await res.json();
+            console.log(data);
+            const stores = data.data.map(store => {
+                return {
+                    type: 'Feature',
+                    geometry: {
+                        type: 'Point',
+                        coordinates: [
+                            store.location.coordinates[0],
+                            store.location.coordinates[1]
+                        ]
+                    },
+                    properties: {
+                        storeId: store.storeId,
+                        icon: 'shop'
+                    }
+                };
+            });
+            loadMap(stores);
+        }
+
+        // Load Map with stores
+        function loadMap(stores) {
+            map.on('load', function () {
+                map.addLayer({
+                    id: 'points',
+                    type: 'symbol',
+                    source: {
+                        type: 'geojson',
+                        data: {
+                            type: 'FeatureCollection',
+                            features: stores
+                        }
+                    },
+                    layout: {
+                        'icon-image': '{icon}-15',
+                        'icon-size': 1.5,
+                        'text-field': '{storeId}',
+                        'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
+                        'text-offset': [0, 0.9],
+                        'text-anchor': 'top'
+                    }
+                });
+            });
+        }
+
+        getStores();
+    </script>
+</body>
+
+</html>
